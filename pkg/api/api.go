@@ -1,13 +1,23 @@
 package api
 
 import (
-	"fmt"
+	"crypto/subtle"
 	"net/http"
+	"strings"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 )
 
 const tokenMissingMsg = "api token is empty or has not been set. exiting"
+
+const (
+	apiAddress         = ":8080"
+	apiReadTimeout     = 5 * time.Second
+	apiReadHeaderLimit = 5 * time.Second
+	apiWriteTimeout    = 30 * time.Second
+	apiIdleTimeout     = 30 * time.Second
+)
 
 // API is the http server responsible for serving the HTTP API endpoints
 type API struct {
@@ -26,9 +36,16 @@ func New(token string) *API {
 // RequireToken is wrapper around http.HandleFunc that checks token validity
 func (api *API) RequireToken(fn http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		const bearerPrefix = "Bearer "
+
 		auth := r.Header.Get("Authorization")
-		want := fmt.Sprintf("Bearer %s", api.Token)
-		if auth != want {
+		if !strings.HasPrefix(auth, bearerPrefix) {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
+		presentedToken := strings.TrimPrefix(auth, bearerPrefix)
+		if subtle.ConstantTimeCompare([]byte(presentedToken), []byte(api.Token)) != 1 {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
@@ -72,5 +89,14 @@ func (api *API) Start(block bool) error {
 }
 
 func runHTTPServer() {
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	server := &http.Server{
+		Addr:              apiAddress,
+		Handler:           nil,
+		ReadTimeout:       apiReadTimeout,
+		ReadHeaderTimeout: apiReadHeaderLimit,
+		WriteTimeout:      apiWriteTimeout,
+		IdleTimeout:       apiIdleTimeout,
+	}
+
+	log.Fatal(server.ListenAndServe())
 }

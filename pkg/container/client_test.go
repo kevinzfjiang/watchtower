@@ -11,6 +11,7 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/backend"
+	dockercontainer "github.com/docker/docker/api/types/container"
 	cli "github.com/docker/docker/client"
 	"github.com/docker/docker/errdefs"
 	"github.com/onsi/gomega/gbytes"
@@ -267,14 +268,14 @@ var _ = Describe("the client", func() {
 				cmd := "exec-cmd"
 
 				mockServer.AppendHandlers(
-					// API.ContainerExecCreate
-					ghttp.CombineHandlers(
-						ghttp.VerifyRequest("POST", HaveSuffix("containers/%v/exec", containerID)),
-						ghttp.VerifyJSONRepresenting(types.ExecConfig{
-							User:   user,
-							Detach: false,
-							Tty:    true,
-							Cmd: []string{
+						// API.ContainerExecCreate
+						ghttp.CombineHandlers(
+							ghttp.VerifyRequest("POST", HaveSuffix("containers/%v/exec", containerID)),
+							ghttp.VerifyJSONRepresenting(dockercontainer.ExecOptions{
+								User:   user,
+								Detach: false,
+								Tty:    true,
+								Cmd: []string{
 								"sh",
 								"-c",
 								cmd,
@@ -282,13 +283,13 @@ var _ = Describe("the client", func() {
 						}),
 						ghttp.RespondWithJSONEncoded(http.StatusOK, types.IDResponse{ID: execID}),
 					),
-					// API.ContainerExecStart
-					ghttp.CombineHandlers(
-						ghttp.VerifyRequest("POST", HaveSuffix("exec/%v/start", execID)),
-						ghttp.VerifyJSONRepresenting(types.ExecStartCheck{
-							Detach: false,
-							Tty:    true,
-						}),
+						// API.ContainerExecStart
+						ghttp.CombineHandlers(
+							ghttp.VerifyRequest("POST", HaveSuffix("exec/%v/start", execID)),
+							ghttp.VerifyJSONRepresenting(dockercontainer.ExecStartOptions{
+								Detach: false,
+								Tty:    true,
+							}),
 						ghttp.RespondWith(http.StatusOK, nil),
 					),
 					// API.ContainerExecInspect

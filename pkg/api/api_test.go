@@ -46,6 +46,18 @@ var _ = Describe("API", func() {
 			Expect(rec.Code).To(Equal(http.StatusUnauthorized))
 		})
 
+		It("should return 401 Unauthorized when bearer prefix is missing", func() {
+			handlerFunc := api.RequireToken(testHandler)
+
+			rec := httptest.NewRecorder()
+			req := httptest.NewRequest("GET", "/hello", nil)
+			req.Header.Set("Authorization", token)
+
+			handlerFunc(rec, req)
+
+			Expect(rec.Code).To(Equal(http.StatusUnauthorized))
+		})
+
 		It("should return 200 OK when token is valid", func() {
 			handlerFunc := api.RequireToken(testHandler)
 

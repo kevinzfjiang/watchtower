@@ -183,6 +183,7 @@ func TestLogFormatFlag(t *testing.T) {
 	SetDefaults()
 	RegisterDockerFlags(cmd)
 	RegisterSystemFlags(cmd)
+	require.NoError(t, cmd.PersistentFlags().Set("no-color", "false"))
 
 	// Ensure the default value is Auto
 	require.NoError(t, cmd.ParseFlags([]string{}))
