@@ -3,9 +3,7 @@ version: '3.7'
 services:
   watchtower:
     container_name: watchtower
-    build:
-      context: ./
-      dockerfile: dockerfiles/Dockerfile.dev-self-contained
+    image: yadiman/watchtower:latest
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     ports:
